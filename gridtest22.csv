@@ -1,0 +1,3 @@
+﻿log(Z_hot),log(Z_cool),log(age_hot)/10,log(age_cool)/10,E(B-V)_hot,E(B-V)_cool
+-1,-1.5,0.7,0.68,0.1,0.05
+-0.5,-1,0.72,0.7,0.2,0.15

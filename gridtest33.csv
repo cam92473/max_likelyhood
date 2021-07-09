@@ -1,0 +1,3 @@
+﻿log(Z_old_1),log(Z_old_2),log(Z_new),log(age_old_1)/10,log(age_old_2)/10,log(age_new)/10,E(B-V)_old,E(B-V)_new
+-1,-1.5,-1.2,0.7,0.68,0.72,0.1,0.05
+-0.5,-1,-0.7,0.72,0.7,0.74,0.2,0.15
