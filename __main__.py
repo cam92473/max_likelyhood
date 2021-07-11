@@ -1,4 +1,6 @@
 import numpy as np
+from numpy.core.records import array
+from numpy.linalg.linalg import norm
 import scipy.optimize as opt
 import pandas as pd
 
@@ -1174,7 +1176,10 @@ class ChiSquared():
             self.varilist = []
             self.errlist = []
 
-            for curr_row in range(self.bandfluxes.shape[0]): 
+            for curr_row in range(self.bandfluxes.shape[0]):
+
+                print("\n\n ********************* WORKING ON ROW {} ********************* \n\n".format(curr_row+2))
+
                 valid_filters_this_row = []
                 ul_filters_this_row = []
                 for valid_ind,arraytup in enumerate(zip(self.bandfluxes.loc[curr_row,:],self.ul_frame.loc[curr_row,:])):
@@ -1227,37 +1232,60 @@ class ChiSquared():
                 M_numer_addends = []
                 E_bv_numer_addends = []
                 denom_addends = []
-                for chisq,coord,m in zip(chisqsthisrow,coordinatesthisrow,msthisrow):
+                norm_chisqs = []
+                norm_chisqs = [chisq-self.bestchisqs[curr_row] for chisq in chisqsthisrow]
+                print("NORM CHISQS \n", norm_chisqs)
+                print("\n------------- CALCULATING AVERAGES USING MAX LIKELIHOOD ---------- \n")
+                for chisq,coord,m in zip(norm_chisqs,coordinatesthisrow,msthisrow):
+                    print("CHISQ, COORD, M \n", chisq,coord,m)
                     Z_numer_addends.append(math.e**(-chisq/2)*coord[0])
                     age_numer_addends.append(math.e**(-chisq/2)*coord[1])
                     M_numer_addends.append(math.e**(-chisq/2)*m)
                     E_bv_numer_addends.append(math.e**(-chisq/2)*coord[2])
                     denom_addends.append(math.e**(-chisq/2))
+                    print("Z NUMERATOR = e^(-chisq/2)*Z \n", Z_numer_addends)
+                    print("AGE NUMERATOR = e^(-chisq/2)*age \n", age_numer_addends)
+                    print("M NUMERATOR = e^(-chisq/2)*M \n", M_numer_addends)
+                    print("E_BV NUMERATOR = e^(-chisq/2)*E_bv \n", E_bv_numer_addends)
+                    print("DENOMINATOR = e^(-chisq/2) \n", denom_addends)
                 Z_avg = sum(Z_numer_addends)/sum(denom_addends)
                 age_avg = sum(age_numer_addends)/sum(denom_addends)
                 M_avg = sum(M_numer_addends)/sum(denom_addends)
                 E_bv_avg = sum(E_bv_numer_addends)/sum(denom_addends)
+
+                print("Averages for this row: \n",Z_avg,age_avg,M_avg,E_bv_avg)
 
                 Z_numer_addends2 = []
                 age_numer_addends2 = []
                 M_numer_addends2 = []
                 E_bv_numer_addends2 = []
                 denom_addends2 = []
-                for chisq,coord,m in zip(chisqsthisrow,coordinatesthisrow,msthisrow):
+                print("\n------------- CALCULATING VARIANCES USING MAX LIKELIHOOD ---------- \n")
+                for chisq,coord,m in zip(norm_chisqs,coordinatesthisrow,msthisrow):
+                    print("CHISQ, COORD, M \n", chisq,coord,m)
                     Z_numer_addends2.append(math.e**(-chisq/2)*(coord[0]-Z_avg)**2)
-                    age_numer_addends2.append(math.e**(-chisq/2)*(coord[0]-age_avg)**2)
+                    age_numer_addends2.append(math.e**(-chisq/2)*(coord[1]-age_avg)**2)
                     M_numer_addends2.append(math.e**(-chisq/2)*(m-M_avg)**2)
-                    E_bv_numer_addends2.append(math.e**(-chisq/2)*(coord[0]-E_bv_avg)**2)
+                    E_bv_numer_addends2.append(math.e**(-chisq/2)*(coord[2]-E_bv_avg)**2)
                     denom_addends2.append(math.e**(-chisq/2))
+                    print("Z NUMERATOR = e^(-chisq/2)*(Z-Zavg)^2 \n", Z_numer_addends2)
+                    print("AGE NUMERATOR = e^(-chisq/2)*(age-ageavg)^2 \n", age_numer_addends2)
+                    print("M NUMERATOR = e^(-chisq/2)*(M-Mavg)^2 \n", M_numer_addends2)
+                    print("E_BV NUMERATOR = e^(-chisq/2)*(E_bv-E_bvavg)^2 \n", E_bv_numer_addends2)
+                    print("DENOMINATOR = e^(-chisq/2) \n", denom_addends2)
                 Z_vari = sum(Z_numer_addends2)/sum(denom_addends2)
                 age_vari = sum(age_numer_addends2)/sum(denom_addends2)
                 M_vari = sum(M_numer_addends2)/sum(denom_addends2)
                 E_bv_vari = sum(E_bv_numer_addends2)/sum(denom_addends2)
 
+                print("Variances for this row: \n",Z_vari,age_vari,M_vari,E_bv_vari)
+
                 Z_err = math.sqrt(Z_vari)
                 age_err = math.sqrt(age_vari)
                 M_err = math.sqrt(M_vari)
                 E_bv_err = math.sqrt(E_bv_vari)
+
+                print("Errors for this row: \n",Z_err,age_err,M_err,E_bv_err)
 
                 self.avglist.append([Z_avg,age_avg,M_avg,E_bv_avg])
                 self.varilist.append([Z_vari,age_vari,M_vari,E_bv_vari])
@@ -1278,7 +1306,10 @@ class ChiSquared():
             self.varilist = []
             self.errlist = []
 
-            for curr_row in range(self.bandfluxes.shape[0]):  
+            for curr_row in range(self.bandfluxes.shape[0]): 
+
+                print("\n\n ********************* WORKING ON ROW {} ********************* \n\n".format(curr_row+2))
+
                 valid_filters_this_row = []
                 ul_filters_this_row = []
                 for valid_ind,arraytup in enumerate(zip(self.bandfluxes.loc[curr_row,:],self.ul_frame.loc[curr_row,:])):
@@ -1354,7 +1385,12 @@ class ChiSquared():
                 M2_numer_addends = []
                 E_bv2_numer_addends = []
                 denom_addends = []
-                for chisq,coord,m in zip(chisqsthisrow,coordinatesthisrow,mvectorsthisrow):
+                norm_chisqs = []
+                norm_chisqs = [chisq-self.bestchisqs[curr_row] for chisq in chisqsthisrow]
+                print("NORM CHISQS \n", norm_chisqs)
+                print("\n------------- CALCULATING AVERAGES USING MAX LIKELIHOOD ---------- \n")
+                for chisq,coord,m in zip(norm_chisqs,coordinatesthisrow,mvectorsthisrow):
+                    print("CHISQ, COORD, M \n", chisq,coord,m)
                     Z1_numer_addends.append(math.e**(-chisq/2)*coord[0])
                     age1_numer_addends.append(math.e**(-chisq/2)*coord[1])
                     M1_numer_addends.append(math.e**(-chisq/2)*m[0])
@@ -1364,6 +1400,15 @@ class ChiSquared():
                     M2_numer_addends.append(math.e**(-chisq/2)*m[1])
                     E_bv2_numer_addends.append(math.e**(-chisq/2)*coord[5])
                     denom_addends.append(math.e**(-chisq/2))
+                    print("Z1 NUMERATOR = e^(-chisq/2)*Z1 \n", Z1_numer_addends)
+                    print("AGE1 NUMERATOR = e^(-chisq/2)*age1 \n", age1_numer_addends)
+                    print("M1 NUMERATOR = e^(-chisq/2)*M1 \n", M1_numer_addends)
+                    print("E_BV1 NUMERATOR = e^(-chisq/2)*E_bv1 \n", E_bv1_numer_addends)
+                    print("Z2 NUMERATOR = e^(-chisq/2)*Z2 \n", Z2_numer_addends)
+                    print("AGE2 NUMERATOR = e^(-chisq/2)*age2 \n", age2_numer_addends)
+                    print("M2 NUMERATOR = e^(-chisq/2)*M2 \n", M2_numer_addends)
+                    print("E_BV2 NUMERATOR = e^(-chisq/2)*E_bv2 \n", E_bv2_numer_addends)
+                    print("DENOMINATOR = e^(-chisq/2) \n", denom_addends)
                 Z1_avg = sum(Z1_numer_addends)/sum(denom_addends)
                 age1_avg = sum(age1_numer_addends)/sum(denom_addends)
                 M1_avg = sum(M1_numer_addends)/sum(denom_addends)
@@ -1372,6 +1417,8 @@ class ChiSquared():
                 age2_avg = sum(age2_numer_addends)/sum(denom_addends)
                 M2_avg = sum(M2_numer_addends)/sum(denom_addends)
                 E_bv2_avg = sum(E_bv2_numer_addends)/sum(denom_addends)
+
+                print("Averages for this row: \n",Z1_avg,age1_avg,M1_avg,E_bv1_avg,Z2_avg,age2_avg,M2_avg,E_bv2_avg)
 
                 Z1_numer_addends2 = []
                 age1_numer_addends2 = []
@@ -1382,7 +1429,9 @@ class ChiSquared():
                 M2_numer_addends2 = []
                 E_bv2_numer_addends2 = []
                 denom_addends2 = []
-                for chisq,coord,m in zip(chisqsthisrow,coordinatesthisrow,mvectorsthisrow):
+                print("\n------------- CALCULATING VARIANCES USING MAX LIKELIHOOD ---------- \n")
+                for chisq,coord,m in zip(norm_chisqs,coordinatesthisrow,mvectorsthisrow):
+                    print("CHISQ, COORD, M \n", chisq,coord,m)
                     Z1_numer_addends2.append(math.e**(-chisq/2)*(coord[0]-Z1_avg)**2)
                     age1_numer_addends2.append(math.e**(-chisq/2)*(coord[1]-age1_avg)**2)
                     M1_numer_addends2.append(math.e**(-chisq/2)*(m[0]-M1_avg)**2)
@@ -1392,6 +1441,15 @@ class ChiSquared():
                     M2_numer_addends2.append(math.e**(-chisq/2)*(m[1]-M2_avg)**2)
                     E_bv2_numer_addends2.append(math.e**(-chisq/2)*(coord[5]-E_bv2_avg)**2)
                     denom_addends2.append(math.e**(-chisq/2))
+                    print("Z1 NUMERATOR = e^(-chisq/2)*(Z1-Zavg)^2 \n", Z1_numer_addends2)
+                    print("AGE1 NUMERATOR = e^(-chisq/2)*(age1-ageavg)^2 \n", age1_numer_addends2)
+                    print("M1 NUMERATOR = e^(-chisq/2)*(M1-Mavg)^2 \n", M1_numer_addends2)
+                    print("E_BV1 NUMERATOR = e^(-chisq/2)*(E_bv1-E_bvavg)^2 \n", E_bv1_numer_addends2)
+                    print("Z2 NUMERATOR = e^(-chisq/2)*(Z2-Zavg)^2 \n", Z2_numer_addends2)
+                    print("AGE2 NUMERATOR = e^(-chisq/2)*(age2-ageavg)^2 \n", age2_numer_addends2)
+                    print("M2 NUMERATOR = e^(-chisq/2)*(M2-Mavg)^2 \n", M2_numer_addends2)
+                    print("E_BV2 NUMERATOR = e^(-chisq/2)*(E_bv2-E_bvavg)^2 \n", E_bv2_numer_addends2)
+                    print("DENOMINATOR = e^(-chisq/2) \n", denom_addends2)
                 Z1_vari = sum(Z1_numer_addends2)/sum(denom_addends2)
                 age1_vari = sum(age1_numer_addends2)/sum(denom_addends2)
                 M1_vari = sum(M1_numer_addends2)/sum(denom_addends2)
@@ -1401,6 +1459,8 @@ class ChiSquared():
                 M2_vari = sum(M2_numer_addends2)/sum(denom_addends2)
                 E_bv2_vari = sum(E_bv2_numer_addends2)/sum(denom_addends2)
 
+                print("Variances for this row: \n",Z1_vari,age1_vari,M1_vari,E_bv1_vari,Z2_vari,age2_vari,M2_vari,E_bv2_vari)
+
                 Z1_err = math.sqrt(Z1_vari)
                 age1_err = math.sqrt(age1_vari)
                 M1_err = math.sqrt(M1_vari)
@@ -1409,6 +1469,8 @@ class ChiSquared():
                 age2_err = math.sqrt(age2_vari)
                 M2_err = math.sqrt(M2_vari)
                 E_bv2_err = math.sqrt(E_bv2_vari)
+
+                print("Errors for this row: \n",Z1_err,age1_err,M1_err,E_bv1_err,Z2_err,age2_err,M2_err,E_bv2_err)
 
                 self.avglist.append([Z1_avg,age1_avg,M1_avg,E_bv1_avg,Z2_avg,age2_avg,M2_avg,E_bv2_avg])
                 self.varilist.append([Z1_vari,age1_vari,M1_vari,E_bv1_vari,Z2_vari,age2_vari,M2_vari,E_bv2_vari])
@@ -1423,7 +1485,10 @@ class ChiSquared():
             self.varilist = []
             self.errlist = []
 
-            for curr_row in range(self.bandfluxes.shape[0]):  
+            for curr_row in range(self.bandfluxes.shape[0]): 
+            
+                print("\n\n ********************* WORKING ON ROW {} ********************* \n\n".format(curr_row+2))
+        
                 valid_filters_this_row = []
                 ul_filters_this_row = []
                 for valid_ind,arraytup in enumerate(zip(self.bandfluxes.loc[curr_row,:],self.ul_frame.loc[curr_row,:])):
@@ -1520,7 +1585,12 @@ class ChiSquared():
                 M_new_numer_addends = []
                 E_bv_new_numer_addends = []
                 denom_addends = []
-                for chisq,coord,m in zip(chisqsthisrow,coordinatesthisrow,mvectorsthisrow):
+                norm_chisqs = []
+                norm_chisqs = [chisq-self.bestchisqs[curr_row] for chisq in chisqsthisrow]
+                print("NORM CHISQS \n", norm_chisqs)
+                print("\n------------- CALCULATING AVERAGES USING MAX LIKELIHOOD ---------- \n")
+                for chisq,coord,m in zip(norm_chisqs,coordinatesthisrow,mvectorsthisrow):
+                    print("CHISQ, COORD, M \n", chisq,coord,m)
                     Z_old_1_numer_addends.append(math.e**(-chisq/2)*coord[0])
                     age_old_1_numer_addends.append(math.e**(-chisq/2)*coord[1])
                     M_old_1_numer_addends.append(math.e**(-chisq/2)*m[0])
@@ -1533,6 +1603,18 @@ class ChiSquared():
                     M_new_numer_addends.append(math.e**(-chisq/2)*m[2])
                     E_bv_new_numer_addends.append(math.e**(-chisq/2)*coord[7])
                     denom_addends.append(math.e**(-chisq/2))
+                    print("Zold1 NUMERATOR = e^(-chisq/2)*Zold1 \n", Z_old_1_numer_addends)
+                    print("AGEold1 NUMERATOR = e^(-chisq/2)*ageold1 \n", age_old_1_numer_addends)
+                    print("Mold1 NUMERATOR = e^(-chisq/2)*Mold1 \n", M_old_1_numer_addends)
+                    print("E_BVold NUMERATOR = e^(-chisq/2)*E_bvold \n", E_bv_old_numer_addends)
+                    print("Zold2 NUMERATOR = e^(-chisq/2)*Zold2 \n", Z_old_2_numer_addends)
+                    print("AGEold2 NUMERATOR = e^(-chisq/2)*ageold2 \n", age_old_2_numer_addends)
+                    print("Mold2 NUMERATOR = e^(-chisq/2)*Mold2 \n", M_old_2_numer_addends)
+                    print("Znew NUMERATOR = e^(-chisq/2)*Znew \n", Z_new_numer_addends)
+                    print("AGEnew NUMERATOR = e^(-chisq/2)*agenew \n", age_new_numer_addends)
+                    print("Mnew NUMERATOR = e^(-chisq/2)*Mnew \n", M_new_numer_addends)
+                    print("E_BVnew NUMERATOR = e^(-chisq/2)*E_bvnew \n", E_bv_new_numer_addends)
+                    print("DENOMINATOR = e^(-chisq/2) \n", denom_addends)
 
                 Z_old_1_avg = sum(Z_old_1_numer_addends)/sum(denom_addends)
                 age_old_1_avg = sum(age_old_1_numer_addends)/sum(denom_addends)
@@ -1546,6 +1628,7 @@ class ChiSquared():
                 M_new_avg = sum(M_new_numer_addends)/sum(denom_addends)
                 E_bv_new_avg = sum(E_bv_new_numer_addends)/sum(denom_addends)
 
+                print("Averages for this row: \n",Z_old_1_avg,age_old_1_avg,M_old_1_avg,E_bv_old_avg,Z_old_2_avg,age_old_2_avg,M_old_2_avg,Z_new_avg,age_new_avg,M_new_avg,E_bv_new_avg)
 
                 Z_old_1_numer_addends2 = []
                 age_old_1_numer_addends2 = []
@@ -1559,7 +1642,9 @@ class ChiSquared():
                 M_new_numer_addends2 = []
                 E_bv_new_numer_addends2 = []
                 denom_addends2 = []
-                for chisq,coord,m in zip(chisqsthisrow,coordinatesthisrow,mvectorsthisrow):
+                print("\n------------- CALCULATING VARIANCES USING MAX LIKELIHOOD ---------- \n")
+                for chisq,coord,m in zip(norm_chisqs,coordinatesthisrow,mvectorsthisrow):
+                    print("CHISQ, COORD, M \n", chisq,coord,m)
                     Z_old_1_numer_addends2.append(math.e**(-chisq/2)*(coord[0]-Z_old_1_avg)**2)
                     age_old_1_numer_addends2.append(math.e**(-chisq/2)*(coord[1]-age_old_1_avg)**2)
                     M_old_1_numer_addends2.append(math.e**(-chisq/2)*(m[0]-M_old_1_avg)**2)
@@ -1572,6 +1657,18 @@ class ChiSquared():
                     M_new_numer_addends2.append(math.e**(-chisq/2)*(m[2]-M_new_avg)**2)
                     E_bv_new_numer_addends2.append(math.e**(-chisq/2)*(coord[7]-E_bv_new_avg)**2)
                     denom_addends2.append(math.e**(-chisq/2))
+                    print("Zold1 NUMERATOR = e^(-chisq/2)*(Zold1-Zold1avg)^2 \n", Z_old_1_numer_addends2)
+                    print("AGEold1 NUMERATOR = e^(-chisq/2)*(ageold1-ageold1avg)^2 \n", age_old_1_numer_addends2)
+                    print("Mold1 NUMERATOR = e^(-chisq/2)*(Mold1-Mold1avg)^2 \n", M_old_1_numer_addends2)
+                    print("E_BVold NUMERATOR = e^(-chisq/2)*(E_bvold-E_bvoldavg)^2 \n", E_bv_old_numer_addends2)
+                    print("Zold2 NUMERATOR = e^(-chisq/2)*(Zold2-Zold2avg)^2 \n", Z_old_2_numer_addends2)
+                    print("AGEold2 NUMERATOR = e^(-chisq/2)*(ageold2-ageold2avg)^2 \n", age_old_2_numer_addends2)
+                    print("Mold2 NUMERATOR = e^(-chisq/2)*(Mold2-Mold2avg)^2 \n", M_old_2_numer_addends2)
+                    print("Znew NUMERATOR = e^(-chisq/2)*(Znew-Znewavg)^2 \n", Z_new_numer_addends2)
+                    print("AGEnew NUMERATOR = e^(-chisq/2)*(agenew-avgenewavg)^2 \n", age_new_numer_addends2)
+                    print("Mnew NUMERATOR = e^(-chisq/2)*(Mnew-Mnewavg)^2 \n", M_new_numer_addends2)
+                    print("E_BVnew NUMERATOR = e^(-chisq/2)*(E_bvnew-E_bvnewavg)^2 \n", E_bv_new_numer_addends2)
+                    print("DENOMINATOR = e^(-chisq/2) \n", denom_addends)
                 
                 Z_old_1_vari = sum(Z_old_1_numer_addends2)/sum(denom_addends2)
                 age_old_1_vari = sum(age_old_1_numer_addends2)/sum(denom_addends2)
@@ -1585,6 +1682,8 @@ class ChiSquared():
                 M_new_vari = sum(M_new_numer_addends2)/sum(denom_addends2)
                 E_bv_new_vari = sum(E_bv_new_numer_addends2)/sum(denom_addends2)
 
+                print("Variances for this row: \n",Z_old_1_vari,age_old_1_vari,M_old_1_vari,E_bv_old_vari,Z_old_2_vari,age_old_2_vari,M_old_2_vari,Z_new_vari,age_new_vari,M_new_vari,E_bv_new_vari)
+
                 Z_old_1_err = math.sqrt(Z_old_1_vari)
                 age_old_1_err = math.sqrt(age_old_1_vari)
                 M_old_1_err = math.sqrt(M_old_1_vari)
@@ -1596,6 +1695,8 @@ class ChiSquared():
                 age_new_err = math.sqrt(age_new_vari)
                 M_new_err = math.sqrt(M_new_vari)
                 E_bv_new_err = math.sqrt(E_bv_new_vari)
+
+                print("Errors for this row: \n",Z_old_1_err,age_old_1_err,M_old_1_err,E_bv_old_err,Z_old_2_err,age_old_2_err,M_old_2_err,Z_new_err,age_new_err,M_new_err,E_bv_new_err)
 
                 self.avglist.append([Z_old_1_avg,age_old_1_avg,M_old_1_avg,E_bv_old_avg,Z_old_2_avg,age_old_2_avg,M_old_2_avg,Z_new_avg,age_new_avg,M_new_avg,E_bv_new_avg])
                 self.varilist.append([Z_old_1_vari,age_old_1_vari,M_old_1_vari,E_bv_old_vari,Z_old_2_vari,age_old_2_vari,M_old_2_vari,Z_new_vari,age_new_vari,M_new_vari,E_bv_new_vari])
@@ -1651,7 +1752,7 @@ class ChiSquared():
             
 
             if self.bestchiparams == 1:
-      
+    
                 colnames = {'Source_ID' : [], "Chi^2_best" : [], "log(Z)_best" : [], "log(age)/10_best" : [], "M_best" : [], "E(B-V)_best" : []}
                 fluxresultsdf = pd.DataFrame(colnames)
                 for curr_row in range(self.bandfluxes.shape[0]):
@@ -1674,9 +1775,15 @@ class ChiSquared():
                     colnames = {'Source_ID' : [], "Chi^2_avg" : [], "log(Z)_avg" : [], "log(age)/10_avg" : [], "M_avg" : [], "E(B-V)_avg" : [], "log(Z)_vari" : [], "log(age)/10_vari" : [], "M_vari" : [], "E(B-V)_vari" : [], "log(Z)_err" : [], "log(age)/10_err" : [], "M_err" : [], "E(B-V)_err" : [], "F148W_model_flux_AvgParams [mJy]" : [], "F169M_model_flux_AvgParams [mJy]" : [], "F172M_model_flux_AvgParams [mJy]" : [], "N219M_model_flux_AvgParams [mJy]" : [], "N279N_model_flux_AvgParams [mJy]" : [], "u_prime_model_flux_AvgParams [mJy]" : [], "g_prime_model_flux_AvgParams [mJy]" : [], "r_prime_model_flux_AvgParams [mJy]" : [], "i_prime_model_flux_AvgParams [mJy]" : [], "z_prime_model_flux_AvgParams [mJy]" : [], "IRAC1_model_flux_AvgParams [mJy]" : [], "IRAC2_model_flux_AvgParams [mJy]" : []}
                 fluxresultsdf = pd.DataFrame(colnames)
                 for curr_row in range(self.bandfluxes.shape[0]):
-                    if self.model_chosen == "UVIT_HST": 
+                    valid_filters_this_row = []
+                    for valid_ind,bflux in enumerate(self.bandfluxes.loc[curr_row,:]):
+                        if np.isnan(bflux) == False:
+                            valid_filters_this_row.append(valid_ind)
+                    if self.model_chosen == "UVIT_HST":
+                        print("Running chisqfunc with average parameters to get Chi^2_avg to save in output.")
                         rowdict = {'Source_ID' : self.source_ids[curr_row], "Chi^2_avg" : self.chisqfunc(self.avglist[curr_row][0],self.avglist[curr_row][1],self.avglist[curr_row][2],self.avglist[curr_row][3],valid_filters_this_row,ul_filters_this_row,curr_row), "log(Z)_avg" : self.avglist[curr_row][0], "log(age)/10_avg" : self.avglist[curr_row][1], "M_avg" : self.avglist[curr_row][2], "E(B-V)_avg" : self.avglist[curr_row][3], "log(Z)_vari" : self.varilist[curr_row][0], "log(age)/10_vari" : self.varilist[curr_row][1], "M_vari" : self.varilist[curr_row][2], "E(B-V)_vari" : self.varilist[curr_row][3], "log(Z)_err" : self.errlist[curr_row][0], "log(age)/10_err" : self.errlist[curr_row][1], "M_err" : self.errlist[curr_row][2], "E(B-V)_err" : self.errlist[curr_row][3], "F148W_model_flux_AvgParams [mJy]" : models.iat[curr_row,0], "F169M_model_flux_AvgParams [mJy]" : models.iat[curr_row,1], "F172M_model_flux_AvgParams [mJy]" : models.iat[curr_row,2], "N219M_model_flux_AvgParams [mJy]" : models.iat[curr_row,3], "N279N_model_flux_AvgParams [mJy]" : models.iat[curr_row,4], "f275w_model_flux_AvgParams [mJy]" : models.iat[curr_row,5], "f336w_model_flux_AvgParams [mJy]" : models.iat[curr_row,6], "f475w_model_flux_AvgParams [mJy]" : models.iat[curr_row,7], "f814w_model_flux_AvgParams [mJy]" : models.iat[curr_row,8], "f110w_model_flux_AvgParams [mJy]" : models.iat[curr_row,9], "f160w_model_flux_AvgParams [mJy]" : models.iat[curr_row,10]}
                     elif self.model_chosen == "UVIT_SDSS_Spitzer": 
+                        print("Running chisqfunc with average parameters to get Chi^2_avg to save in output.")
                         rowdict = {'Source_ID' : self.source_ids[curr_row], "Chi^2_avg" : self.chisqfunc(self.avglist[curr_row][0],self.avglist[curr_row][1],self.avglist[curr_row][2],self.avglist[curr_row][3],valid_filters_this_row,ul_filters_this_row,curr_row), "log(Z)_avg" : self.avglist[curr_row][0], "log(age)/10_avg" : self.avglist[curr_row][1], "M_avg" : self.avglist[curr_row][2], "E(B-V)_avg" : self.avglist[curr_row][3], "log(Z)_vari" : self.varilist[curr_row][0], "log(age)/10_vari" : self.varilist[curr_row][1], "M_vari" : self.varilist[curr_row][2], "E(B-V)_vari" : self.varilist[curr_row][3], "log(Z)_err" : self.errlist[curr_row][0], "log(age)/10_err" : self.errlist[curr_row][1], "M_err" : self.errlist[curr_row][2], "E(B-V)_err" : self.errlist[curr_row][3], "F148W_model_flux_AvgParams [mJy]" : models.iat[curr_row,0], "F169M_model_flux_AvgParams [mJy]" : models.iat[curr_row,1], "F172M_model_flux_AvgParams [mJy]" : models.iat[curr_row,2], "N219M_model_flux_AvgParams [mJy]" : models.iat[curr_row,3], "N279N_model_flux_AvgParams [mJy]" : models.iat[curr_row,4], "u_prime_model_flux_AvgParams [mJy]" : models.iat[curr_row,5], "g_prime_model_flux_AvgParams [mJy]" : models.iat[curr_row,6], "r_prime_model_flux_AvgParams [mJy]" : models.iat[curr_row,7], "i_prime_model_flux_AvgParams [mJy]" : models.iat[curr_row,8], "z_prime_model_flux_AvgParams [mJy]" : models.iat[curr_row,9], "IRAC1_model_flux_AvgParams [mJy]" : models.iat[curr_row,10], "IRAC2_model_flux_AvgParams [mJy]" : models.iat[curr_row,11]}
                     fluxresultsdf =fluxresultsdf.append(rowdict,ignore_index=True)
                 for curr_row in range(self.bandfluxes.shape[0]):
@@ -1728,7 +1835,7 @@ class ChiSquared():
 
 
             if self.bestchiparams == 1:
-      
+    
                 colnames = {'Source_ID' : [], "Chi^2_best" : [], "log(Z_hot)_best" : [], "log(age_hot)/10_best" : [], "M_hot_best" : [], "E(B-V)_hot_best" : [], "log(Z_cool)_best" : [], "log(age_cool)/10_best" : [], "M_cool_best" : [], "E(B-V)_cool_best" : []}
                 fluxresultsdf = pd.DataFrame(colnames)
                 for curr_row in range(self.bandfluxes.shape[0]):
@@ -1751,9 +1858,15 @@ class ChiSquared():
                     colnames = {'Source_ID' : [], "Chi^2_avg" : [], "log(Z_hot)_avg" : [], "log(age_hot)/10_avg" : [], "M_hot_avg" : [], "E(B-V)_hot_avg" : [], "log(Z_cool)_avg" : [], "log(age_cool)/10_avg" : [], "M_cool_avg" : [], "E(B-V)_cool_avg" : [], "log(Z_hot)_vari" : [], "log(age_hot)/10_vari" : [], "M_hot_vari" : [], "E(B-V)_hot_vari" : [], "log(Z_cool)_vari" : [], "log(age_cool)/10_vari" : [], "M_cool_vari" : [], "E(B-V)_cool_vari" : [], "log(Z_hot)_err" : [], "log(age_hot)/10_err" : [], "M_hot_err" : [], "E(B-V)_hot_err" : [], "log(Z_cool)_err" : [], "log(age_cool)/10_err" : [], "M_cool_err" : [], "E(B-V)_cool_err" : [], "F148W_hot_flux_AvgParams [mJy]" : [], "F148W_cool_flux_AvgParams [mJy]" : [], "F169M_hot_flux_AvgParams [mJy]" : [], "F169M_cool_flux_AvgParams [mJy]" : [], "F172M_hot_flux_AvgParams [mJy]" : [], "F172M_cool_flux_AvgParams [mJy]" : [], "N219M_hot_flux_AvgParams [mJy]" : [], "N219M_cool_flux_AvgParams [mJy]" : [], "N279N_hot_flux_AvgParams [mJy]" : [], "N279N_cool_flux_AvgParams [mJy]" : [], "u_prime_hot_flux_AvgParams [mJy]" : [], "u_prime_cool_flux_AvgParams [mJy]" : [], "g_prime_hot_flux_AvgParams [mJy]" : [], "g_prime_cool_flux_AvgParams [mJy]" : [], "r_prime_hot_flux_AvgParams [mJy]" : [], "r_prime_cool_flux_AvgParams [mJy]" : [], "i_prime_hot_flux_AvgParams [mJy]" : [], "i_prime_cool_flux_AvgParams [mJy]" : [], "z_prime_hot_flux_AvgParams [mJy]" : [], "z_prime_cool_flux_AvgParams [mJy]" : [], "IRAC1_hot_flux_AvgParams [mJy]" : [], "IRAC1_cool_flux_AvgParams [mJy]" : [],"IRAC2_hot_flux_AvgParams [mJy]" : [], "IRAC2_cool_flux_AvgParams [mJy]" : []}
                 fluxresultsdf = pd.DataFrame(colnames)
                 for curr_row in range(self.bandfluxes.shape[0]):
-                    if self.model_chosen == "UVIT_HST": 
+                    valid_filters_this_row = []
+                    for valid_ind,bflux in enumerate(self.bandfluxes.loc[curr_row,:]):
+                        if np.isnan(bflux) == False:
+                            valid_filters_this_row.append(valid_ind)
+                    if self.model_chosen == "UVIT_HST":
+                        print("Running chisqfunc2 with average parameters to get Chi^2_avg to save in output.") 
                         rowdict = {'Source_ID' : self.source_ids[curr_row], "Chi^2_avg" : self.chisqfunc2(self.avglist[curr_row][0],self.avglist[curr_row][1],self.avglist[curr_row][2],self.avglist[curr_row][3],self.avglist[curr_row][4],self.avglist[curr_row][5],self.avglist[curr_row][6],self.avglist[curr_row][7],valid_filters_this_row,ul_filters_this_row,curr_row), "log(Z_hot)_avg" : self.avglist[curr_row][0], "log(age_hot)/10_avg" : self.avglist[curr_row][1], "M_hot_avg" : self.avglist[curr_row][2], "E(B-V)_hot_avg" : self.avglist[curr_row][3], "log(Z_cool)_avg" : self.avglist[curr_row][4], "log(age_cool)/10_avg" : self.avglist[curr_row][5], "M_cool_avg" : self.avglist[curr_row][6], "E(B-V)_cool_avg" : self.avglist[curr_row][7], "log(Z_hot)_vari" : self.varilist[curr_row][0], "log(age_hot)/10_vari" : self.varilist[curr_row][1], "M_hot_vari" : self.varilist[curr_row][2], "E(B-V)_hot_vari" : self.varilist[curr_row][3], "log(Z_cool)_vari" : self.varilist[curr_row][4], "log(age_cool)/10_vari" : self.varilist[curr_row][5], "M_cool_vari" : self.varilist[curr_row][6], "E(B-V)_cool_vari" : self.varilist[curr_row][7], "log(Z_hot)_err" : self.errlist[curr_row][0], "log(age_hot)/10_err" : self.errlist[curr_row][1], "M_hot_err" : self.errlist[curr_row][2], "E(B-V)_hot_err" : self.errlist[curr_row][3],  "log(Z_cool)_err" : self.errlist[curr_row][4], "log(age_cool)/10_err" : self.errlist[curr_row][5], "M_cool_err" : self.errlist[curr_row][6], "E(B-V)_cool_err" : self.errlist[curr_row][7], "F148W_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,0], "F148W_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,0], "F169M_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,1],"F169M_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,1], "F172M_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,2], "F172M_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,2], "N219M_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,3], "N219M_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,3], "N279N_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,4], "N279N_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,4], "f275w_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,5], "f275w_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,5], "f336w_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,6], "f336w_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,6], "f475w_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,7], "f475w_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,7], "f814w_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,8], "f814w_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,8], "f110w_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,9], "f110w_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,9], "f160w_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,10], "f160w_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,10]}
-                    elif self.model_chosen == "UVIT_SDSS_Spitzer": 
+                    elif self.model_chosen == "UVIT_SDSS_Spitzer":
+                        print("Running chisqfunc2 with average parameters to get Chi^2_avg to save in output.") 
                         rowdict = {'Source_ID' : self.source_ids[curr_row], "Chi^2_avg" : self.chisqfunc2(self.avglist[curr_row][0],self.avglist[curr_row][1],self.avglist[curr_row][2],self.avglist[curr_row][3],self.avglist[curr_row][4],self.avglist[curr_row][5],self.avglist[curr_row][6],self.avglist[curr_row][7],valid_filters_this_row,ul_filters_this_row,curr_row), "log(Z_hot)_avg" : self.avglist[curr_row][0], "log(age_hot)/10_avg" : self.avglist[curr_row][1], "M_hot_avg" : self.avglist[curr_row][2], "E(B-V)_hot_avg" : self.avglist[curr_row][3], "log(Z_cool)_avg" : self.avglist[curr_row][4], "log(age_cool)/10_avg" : self.avglist[curr_row][5], "M_cool_avg" : self.avglist[curr_row][6], "E(B-V)_cool_avg" : self.avglist[curr_row][7], "log(Z_hot)_vari" : self.varilist[curr_row][0], "log(age_hot)/10_vari" : self.varilist[curr_row][1], "M_hot_vari" : self.varilist[curr_row][2], "E(B-V)_hot_vari" : self.varilist[curr_row][3], "log(Z_cool)_vari" : self.varilist[curr_row][4], "log(age_cool)/10_vari" : self.varilist[curr_row][5], "M_cool_vari" : self.varilist[curr_row][6], "E(B-V)_cool_vari" : self.varilist[curr_row][7], "log(Z_hot)_err" : self.errlist[curr_row][0], "log(age_hot)/10_err" : self.errlist[curr_row][1], "M_hot_err" : self.errlist[curr_row][2], "E(B-V)_hot_err" : self.errlist[curr_row][3],  "log(Z_cool)_err" : self.errlist[curr_row][4], "log(age_cool)/10_err" : self.errlist[curr_row][5], "M_cool_err" : self.errlist[curr_row][6], "E(B-V)_cool_err" : self.errlist[curr_row][7], "F148W_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,0], "F148W_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,0], "F169M_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,1],"F169M_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,1], "F172M_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,2], "F172M_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,2], "N219M_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,3], "N219M_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,3], "N279N_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,4], "N279N_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,4], "u_prime_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,5], "u_prime_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,5], "g_prime_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,6], "g_prime_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,6], "r_prime_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,7], "r_prime_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,7], "i_prime_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,8], "i_prime_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,8], "z_prime_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,9], "z_prime_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,9], "IRAC1_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,10], "IRAC1_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,10],"IRAC2_hot_flux_AvgParams [mJy]" : hotmodels.iat[curr_row,11], "IRAC2_cool_flux_AvgParams [mJy]" : coolmodels.iat[curr_row,11]}
                     fluxresultsdf =fluxresultsdf.append(rowdict,ignore_index=True)
                 for curr_row in range(self.bandfluxes.shape[0]):
@@ -1811,7 +1924,7 @@ class ChiSquared():
                 
             
             if self.bestchiparams == 1:
-      
+    
                 colnames = {'Source_ID' : [], "Chi^2_best" : [], "log(Z_old_1)_best" : [], "log(age_old_1)/10_best" : [], "M_old_1_best" : [], "E(B-V)_old_best" : [], "log(Z_old_2)_best" : [], "log(age_old_2)/10_best" : [], "M_old_2_best" : [], "log(Z_new)_best" : [], "log(age_new)/10_best" : [], "M_new_best" : [], "E(B-V)_new_best" : []}
                 fluxresultsdf = pd.DataFrame(colnames)
                 for curr_row in range(self.bandfluxes.shape[0]):
@@ -1834,9 +1947,15 @@ class ChiSquared():
                     colnames = {'Source_ID' : [], "Chi^2_avg" : [], "log(Z_old_1)_avg" : [], "log(age_old_1)/10_avg" : [], "M_old_1_avg" : [], "E(B-V)_old_avg" : [], "log(Z_old_2)_avg" : [], "log(age_old_2)/10_avg" : [], "M_old_2_avg" : [], "log(Z_new)_avg" : [], "log(age_new)/10_avg" : [], "M_new_avg" : [], "E(B-V)_new_avg" : [], "log(Z_old_1)_vari" : [], "log(age_old_1)/10_vari" : [], "M_old_1_vari" : [], "E(B-V)_old_vari" : [], "log(Z_old_2)_vari" : [], "log(age_old_2)/10_vari" : [], "M_old_2_vari" : [], "log(Z_new)_vari" : [], "log(age_new)/10_vari" : [], "M_new_vari" : [], "E(B-V)_new_vari" : [], "log(Z_old_1)_err" : [], "log(age_old_1)/10_err" : [], "M_old_1_err" : [], "E(B-V)_old_err" : [], "log(Z_old_2)_err" : [], "log(age_old_2)/10_err" : [], "M_old_2_err" : [], "log(Z_new)_err" : [], "log(age_new)/10_err" : [], "M_new_err" : [], "E(B-V)_new_err" : [], "F148W_old_1_flux_AvgParams [mJy]" : [], "F148W_old_2_flux_AvgParams [mJy]" : [], "F148W_new_flux_AvgParams [mJy]" : [], "F169M_old_1_flux_AvgParams [mJy]" : [], "F169M_old_2_flux_AvgParams [mJy]" : [], "F169M_new_flux_AvgParams [mJy]" : [], "F172M_old_1_flux_AvgParams [mJy]" : [], "F172M_old_2_flux_AvgParams [mJy]" : [], "F172M_new_flux_AvgParams [mJy]" : [], "N219M_old_1_flux_AvgParams [mJy]" : [], "N219M_old_2_flux_AvgParams [mJy]" : [], "N219M_new_flux_AvgParams [mJy]" : [], "N279N_old_1_flux_AvgParams [mJy]" : [], "N279N_old_2_flux_AvgParams [mJy]" : [], "N279N_new_flux_AvgParams [mJy]" : [], "u_prime_old_1_flux_AvgParams [mJy]" : [], "u_prime_old_2_flux_AvgParams [mJy]" : [], "u_prime_new_flux_AvgParams [mJy]" : [], "g_prime_old_1_flux_AvgParams [mJy]" : [], "g_prime_old_2_flux_AvgParams [mJy]" : [], "g_prime_new_flux_AvgParams [mJy]" : [], "r_prime_old_1_flux_AvgParams [mJy]" : [], "r_prime_old_2_flux_AvgParams [mJy]" : [], "r_prime_new_flux_AvgParams [mJy]" : [], "i_prime_old_1_flux_AvgParams [mJy]" : [], "i_prime_old_2_flux_AvgParams [mJy]" : [], "i_prime_new_flux_AvgParams [mJy]" : [], "z_prime_old_1_flux_AvgParams [mJy]" : [], "z_prime_old_2_flux_AvgParams [mJy]" : [], "z_prime_new_flux_AvgParams [mJy]" : [], "IRAC1_old_1_flux_AvgParams [mJy]" : [], "IRAC1_old_2_flux_AvgParams [mJy]" : [], "IRAC1_new_flux_AvgParams [mJy]" : [], "IRAC2_old_1_flux_AvgParams [mJy]" : [], "IRAC2_old_2_flux_AvgParams [mJy]" : [], "IRAC2_new_flux_AvgParams [mJy]" : []}
                 fluxresultsdf = pd.DataFrame(colnames)
                 for curr_row in range(self.bandfluxes.shape[0]):
-                    if self.model_chosen == "UVIT_HST": 
+                    valid_filters_this_row = []
+                    for valid_ind,bflux in enumerate(self.bandfluxes.loc[curr_row,:]):
+                        if np.isnan(bflux) == False:
+                            valid_filters_this_row.append(valid_ind)
+                    if self.model_chosen == "UVIT_HST":
+                        print("Running chisqfunc3 with average parameters to get Chi^2_avg to save in output.") 
                         rowdict = {'Source_ID' : self.source_ids[curr_row], "Chi^2_avg" : self.chisqfunc3(self.avglist[curr_row][0],self.avglist[curr_row][1],self.avglist[curr_row][2],self.avglist[curr_row][3],self.avglist[curr_row][4],self.avglist[curr_row][5],self.avglist[curr_row][6],self.avglist[curr_row][7],self.avglist[curr_row][8],self.avglist[curr_row][9],self.avglist[curr_row][10],valid_filters_this_row,ul_filters_this_row,curr_row), "log(Z_old_1)_avg" : self.avglist[curr_row][0], "log(age_old_1)/10_avg" : self.avglist[curr_row][1], "M_old_1_avg" : self.avglist[curr_row][2], "E(B-V)_old_avg" : self.avglist[curr_row][3], "log(Z_old_2)_avg" : self.avglist[curr_row][4], "log(age_old_2)/10_avg" : self.avglist[curr_row][5], "M_old_2_avg" : self.avglist[curr_row][6], "log(Z_new)_avg" : self.avglist[curr_row][7], "log(age_new)/10_avg" : self.avglist[curr_row][8], "M_new_avg" : self.avglist[curr_row][9], "E(B-V)_new_avg" : self.avglist[curr_row][10], "log(Z_old_1)_vari" : self.varilist[curr_row][0], "log(age_old_1)/10_vari" : self.varilist[curr_row][1], "M_old_1_vari" : self.varilist[curr_row][2], "E(B-V)_old_vari" : self.varilist[curr_row][3], "log(Z_old_2)_vari" : self.varilist[curr_row][4], "log(age_old_2)/10_vari" : self.varilist[curr_row][5], "M_old_2_vari" : self.varilist[curr_row][6], "log(Z_new)_vari" : self.varilist[curr_row][7], "log(age_new)/10_vari" : self.varilist[curr_row][8], "M_new_vari" : self.varilist[curr_row][9], "E(B-V)_new_vari" : self.varilist[curr_row][10], "log(Z_old_1)_err" : self.errlist[curr_row][0], "log(age_old_1)/10_err" : self.errlist[curr_row][1], "M_old_1_err" : self.errlist[curr_row][2], "E(B-V)_old_err" : self.errlist[curr_row][3], "log(Z_old_2)_err" : self.errlist[curr_row][4], "log(age_old_2)/10_err" : self.errlist[curr_row][5], "M_old_2_err" : self.errlist[curr_row][6], "log(Z_new)_err" : self.errlist[curr_row][7], "log(age_new)/10_err" : self.errlist[curr_row][8], "M_new_err" : self.errlist[curr_row][9], "E(B-V)_new_err" : self.errlist[curr_row][10], "F148W_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,0], "F148W_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,0], "F148W_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,0], "F169M_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,1], "F169M_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,1], "F169M_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,1], "F172M_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,2], "F172M_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,2], "F172M_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,2], "N219M_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,3], "N219M_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,3], "N219M_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,3], "N279N_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,4], "N279N_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,4], "N279N_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,4], "f275w_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,5], "f275w_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,5], "f275w_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,5], "f336w_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,6], "f336w_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,6], "f336w_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,6], "f475w_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,7], "f475w_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,7], "f475w_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,7], "f814w_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,8], "f814w_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,8], "f814w_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,8], "f110w_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,9], "f110w_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,9], "f110w_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,9], "f160w_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,10], "f160w_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,10], "f160w_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,10]}
-                    elif self.model_chosen == "UVIT_SDSS_Spitzer": 
+                    elif self.model_chosen == "UVIT_SDSS_Spitzer":
+                        print("Running chisqfunc3 with average parameters to get Chi^2_avg to save in output.") 
                         rowdict = {'Source_ID' : self.source_ids[curr_row], "Chi^2_avg" : self.chisqfunc3(self.avglist[curr_row][0],self.avglist[curr_row][1],self.avglist[curr_row][2],self.avglist[curr_row][3],self.avglist[curr_row][4],self.avglist[curr_row][5],self.avglist[curr_row][6],self.avglist[curr_row][7],self.avglist[curr_row][8],self.avglist[curr_row][9],self.avglist[curr_row][10],valid_filters_this_row,ul_filters_this_row,curr_row), "log(Z_old_1)_avg" : self.avglist[curr_row][0], "log(age_old_1)/10_avg" : self.avglist[curr_row][1], "M_old_1_avg" : self.avglist[curr_row][2], "E(B-V)_old_avg" : self.avglist[curr_row][3], "log(Z_old_2)_avg" : self.avglist[curr_row][4], "log(age_old_2)/10_avg" : self.avglist[curr_row][5], "M_old_2_avg" : self.avglist[curr_row][6], "log(Z_new)_avg" : self.avglist[curr_row][7], "log(age_new)/10_avg" : self.avglist[curr_row][8], "M_new_avg" : self.avglist[curr_row][9], "E(B-V)_new_avg" : self.avglist[curr_row][10], "log(Z_old_1)_vari" : self.varilist[curr_row][0], "log(age_old_1)/10_vari" : self.varilist[curr_row][1], "M_old_1_vari" : self.varilist[curr_row][2], "E(B-V)_old_vari" : self.varilist[curr_row][3], "log(Z_old_2)_vari" : self.varilist[curr_row][4], "log(age_old_2)/10_vari" : self.varilist[curr_row][5], "M_old_2_vari" : self.varilist[curr_row][6], "log(Z_new)_vari" : self.varilist[curr_row][7], "log(age_new)/10_vari" : self.varilist[curr_row][8], "M_new_vari" : self.varilist[curr_row][9], "E(B-V)_new_vari" : self.varilist[curr_row][10], "log(Z_old_1)_err" : self.errlist[curr_row][0], "log(age_old_1)/10_err" : self.errlist[curr_row][1], "M_old_1_err" : self.errlist[curr_row][2], "E(B-V)_old_err" : self.errlist[curr_row][3], "log(Z_old_2)_err" : self.errlist[curr_row][4], "log(age_old_2)/10_err" : self.errlist[curr_row][5], "M_old_2_err" : self.errlist[curr_row][6], "log(Z_new)_err" : self.errlist[curr_row][7], "log(age_new)/10_err" : self.errlist[curr_row][8], "M_new_err" : self.errlist[curr_row][9], "E(B-V)_new_err" : self.errlist[curr_row][10], "F148W_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,0], "F148W_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,0], "F148W_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,0], "F169M_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,1], "F169M_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,1], "F169M_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,1], "F172M_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,2], "F172M_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,2], "F172M_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,2], "N219M_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,3], "N219M_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,3], "N219M_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,3], "N279N_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,4], "N279N_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,4], "N279N_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,4], "u_prime_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,5], "u_prime_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,5], "u_prime_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,5], "g_prime_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,6], "g_prime_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,6], "g_prime_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,6], "r_prime_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,7], "r_prime_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,7], "r_prime_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,7], "i_prime_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,8], "i_prime_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,8], "i_prime_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,8], "z_prime_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,9], "z_prime_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,9], "z_prime_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,9], "IRAC1_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,10], "IRAC1_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,10], "IRAC1_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,10], "IRAC2_old_1_flux_AvgParams [mJy]" : old_1_models.iat[curr_row,11], "IRAC2_old_2_flux_AvgParams [mJy]" : old_2_models.iat[curr_row,11], "IRAC2_new_flux_AvgParams [mJy]" : new_models.iat[curr_row,11]}
                     fluxresultsdf =fluxresultsdf.append(rowdict,ignore_index=True)
                 for curr_row in range(self.bandfluxes.shape[0]):
@@ -1977,6 +2096,7 @@ class ChiSquared():
         groove2.place(x=405,y=755)
         label6 = tk.Label(topw,text="Chi^2 value for average parameters")
         label6.place(x=425,y=765)
+        print("Running chisqfunc with average parameters to get Chi^2_avg to display in output window.")
         label6a = tk.Label(topw,text="{}".format(format(self.chisqfunc(self.avglist[curr_row][0],self.avglist[curr_row][1],self.avglist[curr_row][2],self.avglist[curr_row][3],valid_filters_this_row,ul_filters_this_row,curr_row),'.6e')),font=("Arial",12))
         label6a.place(x=437,y=815)
         
@@ -2188,6 +2308,7 @@ class ChiSquared():
         groove2.place(x=405,y=755)
         label6 = tk.Label(topw,text="Chi^2 value for average parameters")
         label6.place(x=425,y=765)
+        print("Running chisqfunc2 with average parameters to get Chi^2_avg to display in output window.")
         label6a = tk.Label(topw,text="{}".format(format(self.chisqfunc2(self.avglist[curr_row][0],self.avglist[curr_row][1],self.avglist[curr_row][2],self.avglist[curr_row][3],self.avglist[curr_row][4],self.avglist[curr_row][5],self.avglist[curr_row][6],self.avglist[curr_row][7],valid_filters_this_row,ul_filters_this_row,curr_row),'.6e')),font=("Arial",12))
         label6a.place(x=437,y=815)
 
@@ -2442,6 +2563,7 @@ class ChiSquared():
         groove2.place(x=405,y=755)
         label6 = tk.Label(topw,text="Chi^2 value for average parameters")
         label6.place(x=425,y=765)
+        print("Running chisqfunc3 with average parameters to get Chi^2_avg to display in output window.")
         label6a = tk.Label(topw,text="{}".format(format(self.chisqfunc3(self.avglist[curr_row][0],self.avglist[curr_row][1],self.avglist[curr_row][2],self.avglist[curr_row][3],self.avglist[curr_row][4],self.avglist[curr_row][5],self.avglist[curr_row][6],self.avglist[curr_row][7],self.avglist[curr_row][8],self.avglist[curr_row][9],self.avglist[curr_row][10],valid_filters_this_row,ul_filters_this_row,curr_row),'.6e')),font=("Arial",12))
         label6a.place(x=437,y=815)
         
