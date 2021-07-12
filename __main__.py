@@ -639,7 +639,7 @@ class ChiSquared():
 
         if self.model_chosen == "UVIT_HST":
 
-            fluxdata = pd.read_csv("fluxpersolarmass2.csv")
+            fluxdata = pd.read_csv("fluxpersolarmassUVIT_HST.csv")
             
             blankdata = np.zeros((13,19,11))
 
@@ -659,21 +659,21 @@ class ChiSquared():
             self.da = xr.DataArray(filleddata,coords=[("Z",zcoordlist),("Age",agecoordlist),("Filter",filtercoordlist)])
 
         elif self.model_chosen == "UVIT_SDSS_Spitzer":
-            fluxdata = pd.read_csv("fluxpersolarmass4.csv")
+            fluxdata = pd.read_csv("fluxpersolarmassSDSS_Spitzer.csv")
 
-            blankdata = np.zeros((10,16,12))
+            blankdata = np.zeros((13,19,12))
 
             row=0
-            for Z in range(10):
-                for age in range(16):
+            for Z in range(13):
+                for age in range(19):
                     for filt in range(12):
                         blankdata[Z,age,filt] = fluxdata.iat[row,filt]
                     row += 1
 
             filleddata = blankdata
 
-            zcoordlist = [-2.111850363,-1.900996997,-1.662757832,-1.435156753,-1.205380635,-0.977513852,-0.750122527,-0.524279696,-0.301029996,-0.082466585]
-            agecoordlist = [0.659988307,0.68350561,0.707188201,0.730535137,0.754157924,0.777670118,0.801283722,0.824797327,0.848287358,0.87176705,0.895279244,0.918752072,0.942324587,0.965896484,0.989431606,1.013033377]
+            zcoordlist = [-2.617,-2.36173,-2.11185,-1.86881,-1.62577,-1.37645,-1.12564,-0.87822,-0.63202,-0.38809,-0.14836,0.08353,0.303332]
+            agecoordlist = [.66,.68,.70,.72,.74,.76,.78,.80,.82,.84,.86,.88,.90,.92,.94,.96,.98,1.0,1.2]
             filtercoordlist = [0,1,2,3,4,5,6,7,8,9,10,11]
 
             self.da = xr.DataArray(filleddata,coords=[("Z",zcoordlist),("Age",agecoordlist),("Filter",filtercoordlist)])
@@ -1294,7 +1294,6 @@ class ChiSquared():
             print("AVGLIST \n",self.avglist,"\n")
             print("VARILIST \n",self.varilist,"\n")
             print("ERRLIST \n",self.errlist,"\n")
-            
 
         
         elif self.double_cluster == True:
